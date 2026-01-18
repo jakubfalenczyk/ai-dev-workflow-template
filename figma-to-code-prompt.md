@@ -1,8 +1,8 @@
 # Figma-to-Code: Topbar to Left Sidebar Conversion
 
 ## Figma Design
-- **URL**: https://www.figma.com/design/3rK90PeN2rb95VARnOKS8u/ERP--Community-?node-id=19-703
-- **File Key**: `3rK90PeN2rb95VARnOKS8u`
+- **URL**: https://www.figma.com/design/uB3lB1QmZ7C59egTxQCumz/ERP--Community-?node-id=19-703&t=ITVMZt0rYd6RdJMo-0
+- **File Key**: `uB3lB1QmZ7C59egTxQCumz`
 - **Node ID**: `19:703`
 
 ## Design Alignment Requirements
@@ -32,7 +32,7 @@
 Convert the current horizontal topbar navigation to a left sidebar based on the Figma design.
 
 1. Fetch the design from Figma using MCP:
-   - Use mcp__figma__get_design_context with fileKey "3rK90PeN2rb95VARnOKS8u" and nodeId "19:703"
+   - Use mcp__figma__get_design_context with fileKey "uB3lB1QmZ7C59egTxQCumz" and nodeId "19:703"
    - Use mcp__figma__get_screenshot for visual reference
    - Use mcp__figma__get_variable_defs if design tokens are available
 
