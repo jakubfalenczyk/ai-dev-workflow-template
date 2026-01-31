@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Users, Briefcase, Plus, Minus, ArrowLeft, Calculator } from 'lucide-react';
 import { createOrder } from './orders.api.ts';
 import { getCustomers } from '../customers/customers.api.ts';
 import { getProducts } from '../products/products.api.ts';
@@ -29,6 +30,7 @@ function OrderForm() {
         mutationFn: createOrder,
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['orders'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
             navigate('/orders');
         },
     });
@@ -63,112 +65,198 @@ function OrderForm() {
                 return total + (parseFloat(product.price) * item.quantity);
             }
             return total;
-        }, 0).toFixed(2);
+        }, 0);
     };
 
-    return (
-        <div className="px-4 sm:px-6 lg:px-8">
-            <div className="md:grid md:grid-cols-3 md:gap-6">
-                <div className="md:col-span-1">
-                    <h3 className="text-lg font-medium leading-6 text-gray-900">New Order</h3>
-                    <p className="mt-1 text-sm text-gray-600">Create a new order for a customer</p>
-                </div>
-                <div className="mt-5 md:mt-0 md:col-span-2">
-                    <form onSubmit={handleSubmit}>
-                        <div className="shadow sm:rounded-md sm:overflow-hidden">
-                            <div className="px-4 py-5 bg-white space-y-6 sm:p-6">
-                                <div>
-                                    <label htmlFor="customer" className="block text-sm font-medium text-gray-700">
-                                        Customer
-                                    </label>
-                                    <select
-                                        id="customer"
-                                        name="customer"
-                                        required
-                                        value={customerId}
-                                        onChange={(e) => setCustomerId(e.target.value)}
-                                        className="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-                                    >
-                                        <option value="">Select a customer</option>
-                                        {customers?.map((customer) => (
-                                            <option key={customer.id} value={customer.id}>
-                                                {customer.name}
-                                            </option>
-                                        ))}
-                                    </select>
-                                </div>
+    const formatCurrency = (value: number): string => {
+        if (value >= 1000000) {
+            return `$${(value / 1000000).toFixed(2)}M`;
+        }
+        if (value >= 1000) {
+            return `$${(value / 1000).toFixed(1)}K`;
+        }
+        return `$${value.toFixed(2)}`;
+    };
 
-                                <div>
-                                    <label className="block text-sm font-medium text-gray-700 mb-2">Order Items</label>
-                                    {items.map((item, index) => (
-                                        <div key={index} className="flex gap-4 mb-3">
-                                            <select
-                                                value={item.productId}
-                                                onChange={(e) => updateItem(index, 'productId', e.target.value)}
-                                                className="flex-1 block pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-                                                required
-                                            >
-                                                <option value="">Select a product</option>
-                                                {products?.map((product) => (
-                                                    <option key={product.id} value={product.id}>
-                                                        {product.name} (${product.price}) - Stock: {product.stock}
-                                                    </option>
-                                                ))}
-                                            </select>
-                                            <input
-                                                type="number"
-                                                min="1"
-                                                value={item.quantity}
-                                                onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value))}
-                                                className="w-24 block px-3 py-2 text-base border-gray-300 focus:outline-none focus:ring-indigo-500 focus:border-indigo-500 sm:text-sm rounded-md border"
-                                                placeholder="Qty"
-                                                required
-                                            />
+    const activeCustomers = customers?.filter(c => c.status === 'ACTIVE') || [];
+    const isLoading = createMutation.isPending;
+    const total = calculateTotal();
+
+    return (
+        <div className="max-w-3xl mx-auto">
+            {/* Back button */}
+            <button
+                onClick={() => navigate('/orders')}
+                className="inline-flex items-center gap-2 text-sm text-slate-600 hover:text-slate-900 mb-6 transition-colors"
+            >
+                <ArrowLeft className="h-4 w-4" />
+                Back to Transactions
+            </button>
+
+            <div className="bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
+                {/* Header */}
+                <div className="bg-gradient-to-r from-slate-800 to-slate-700 px-6 py-5">
+                    <h1 className="text-xl font-semibold text-white">New Transaction</h1>
+                    <p className="mt-1 text-sm text-slate-300">Create a new financial transaction for a client</p>
+                </div>
+
+                <form onSubmit={handleSubmit}>
+                    <div className="p-6 space-y-6">
+                        {/* Client Selection */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">
+                                Select Client
+                            </h3>
+                            <div className="relative">
+                                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <Users className="h-4 w-4 text-slate-400" />
+                                </div>
+                                <select
+                                    id="customer"
+                                    name="customer"
+                                    required
+                                    value={customerId}
+                                    onChange={(e) => setCustomerId(e.target.value)}
+                                    className="block w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors appearance-none bg-white"
+                                >
+                                    <option value="">Select a client account...</option>
+                                    {activeCustomers.map((customer) => (
+                                        <option key={customer.id} value={customer.id}>
+                                            {customer.name} - {customer.email}
+                                        </option>
+                                    ))}
+                                </select>
+                            </div>
+                            <p className="mt-1 text-xs text-slate-500">
+                                Only verified client accounts are shown
+                            </p>
+                        </div>
+
+                        {/* Product Selection */}
+                        <div>
+                            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">
+                                Financial Products
+                            </h3>
+                            <div className="space-y-3">
+                                {items.map((item, index) => {
+                                    const selectedProduct = products?.find(p => p.id === item.productId);
+                                    return (
+                                        <div key={index} className="flex gap-3 items-start p-4 bg-slate-50 rounded-lg border border-slate-200">
+                                            <div className="flex-1">
+                                                <div className="relative">
+                                                    <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                        <Briefcase className="h-4 w-4 text-slate-400" />
+                                                    </div>
+                                                    <select
+                                                        value={item.productId}
+                                                        onChange={(e) => updateItem(index, 'productId', e.target.value)}
+                                                        className="block w-full pl-10 pr-10 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors appearance-none bg-white"
+                                                        required
+                                                    >
+                                                        <option value="">Select a product...</option>
+                                                        {products?.map((product) => (
+                                                            <option key={product.id} value={product.id}>
+                                                                {product.name} ({product.sku})
+                                                            </option>
+                                                        ))}
+                                                    </select>
+                                                </div>
+                                                {selectedProduct && (
+                                                    <p className="mt-1 text-xs text-slate-500">
+                                                        {selectedProduct.description?.substring(0, 80)}...
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="w-24">
+                                                <label className="block text-xs text-slate-500 mb-1">Units</label>
+                                                <input
+                                                    type="number"
+                                                    min="1"
+                                                    value={item.quantity}
+                                                    onChange={(e) => updateItem(index, 'quantity', parseInt(e.target.value) || 1)}
+                                                    className="block w-full px-3 py-2.5 border border-slate-300 rounded-lg text-sm focus:ring-2 focus:ring-slate-500 focus:border-slate-500 transition-colors text-center"
+                                                    required
+                                                />
+                                            </div>
+                                            <div className="w-28 text-right">
+                                                <label className="block text-xs text-slate-500 mb-1">Subtotal</label>
+                                                <p className="py-2.5 text-sm font-semibold text-slate-900">
+                                                    {selectedProduct
+                                                        ? formatCurrency(parseFloat(selectedProduct.price) * item.quantity)
+                                                        : '$0.00'}
+                                                </p>
+                                            </div>
                                             {items.length > 1 && (
                                                 <button
                                                     type="button"
                                                     onClick={() => removeItem(index)}
-                                                    className="px-3 py-2 border border-red-300 text-red-700 rounded-md hover:bg-red-50"
+                                                    className="mt-6 p-2 text-red-600 hover:text-red-700 hover:bg-red-50 rounded-lg transition-colors"
                                                 >
-                                                    Remove
+                                                    <Minus className="h-4 w-4" />
                                                 </button>
                                             )}
                                         </div>
-                                    ))}
-                                    <button
-                                        type="button"
-                                        onClick={addItem}
-                                        className="mt-2 inline-flex items-center px-3 py-2 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                    >
-                                        Add Item
-                                    </button>
-                                </div>
-
-                                <div className="border-t pt-4">
-                                    <div className="flex justify-between text-lg font-medium">
-                                        <span>Total:</span>
-                                        <span>${calculateTotal()}</span>
-                                    </div>
-                                </div>
+                                    );
+                                })}
                             </div>
-                            <div className="px-4 py-3 bg-gray-50 text-right sm:px-6 space-x-3">
-                                <button
-                                    type="button"
-                                    onClick={() => navigate('/orders')}
-                                    className="inline-flex justify-center py-2 px-4 border border-gray-300 shadow-sm text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                >
-                                    Cancel
-                                </button>
-                                <button
-                                    type="submit"
-                                    className="inline-flex justify-center py-2 px-4 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500"
-                                >
-                                    Create Order
-                                </button>
+                            <button
+                                type="button"
+                                onClick={addItem}
+                                className="mt-3 inline-flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 hover:bg-slate-100 rounded-lg border border-slate-300 transition-colors"
+                            >
+                                <Plus className="h-4 w-4" />
+                                Add Another Product
+                            </button>
+                        </div>
+
+                        {/* Transaction Summary */}
+                        <div className="border-t border-slate-200 pt-6">
+                            <h3 className="text-sm font-semibold text-slate-900 uppercase tracking-wider mb-4">
+                                Transaction Summary
+                            </h3>
+                            <div className="bg-slate-50 rounded-lg p-4 border border-slate-200">
+                                <div className="flex items-center justify-between">
+                                    <div className="flex items-center gap-2 text-slate-600">
+                                        <Calculator className="h-5 w-5" />
+                                        <span className="font-medium">Total Transaction Amount</span>
+                                    </div>
+                                    <span className="text-2xl font-bold text-slate-900">
+                                        {formatCurrency(total)}
+                                    </span>
+                                </div>
+                                <p className="mt-2 text-xs text-slate-500">
+                                    This transaction will be processed and added to the client's account history.
+                                </p>
                             </div>
                         </div>
-                    </form>
-                </div>
+                    </div>
+
+                    {/* Footer */}
+                    <div className="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-end gap-3">
+                        <button
+                            type="button"
+                            onClick={() => navigate('/orders')}
+                            className="px-4 py-2.5 border border-slate-300 text-sm font-medium rounded-lg text-slate-700 bg-white hover:bg-slate-50 transition-colors"
+                        >
+                            Cancel
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={isLoading || !customerId || items.every(i => !i.productId)}
+                            className="px-6 py-2.5 bg-slate-800 text-white text-sm font-medium rounded-lg hover:bg-slate-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                        >
+                            {isLoading ? (
+                                <span className="flex items-center gap-2">
+                                    <svg className="animate-spin h-4 w-4" viewBox="0 0 24 24">
+                                        <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                                    </svg>
+                                    Processing...
+                                </span>
+                            ) : 'Submit Transaction'}
+                        </button>
+                    </div>
+                </form>
             </div>
         </div>
     );
