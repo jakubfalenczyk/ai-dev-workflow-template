@@ -16,7 +16,9 @@
       "Bash(where:*)",
       "Bash(npm run dev:*)",
       "Bash(npx playwright:*)",
-      "Bash(timeout /t 5 /nobreak)"
+      "Bash(timeout /t 5 /nobreak)",
+      "Bash(npm test:*)",
+      "Bash(npx tsc:*)"
     ]
   }
 }
