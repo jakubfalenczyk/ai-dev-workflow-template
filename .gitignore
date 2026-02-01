@@ -65,6 +65,7 @@ Desktop.ini
 .parcel-cache/
 screenshots/
 test-results/
+playwright-report/
 
 # Generated files
 /server/src/generated/

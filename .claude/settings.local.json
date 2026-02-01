@@ -18,7 +18,9 @@
       "Bash(npx playwright:*)",
       "Bash(timeout /t 5 /nobreak)",
       "Bash(npm test:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(dir \"C:\\\\Personal\\\\ai-dev-workflow-template\\\\screenshots\\\\transaction-status\")",
+      "Bash(dir:*)"
     ]
   }
 }
