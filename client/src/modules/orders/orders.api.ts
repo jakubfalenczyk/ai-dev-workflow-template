@@ -15,3 +15,8 @@ export const createOrder = async (data: CreateOrderInput): Promise<Order> => {
     const response = await apiClient.post('/orders', data);
     return response.data;
 };
+
+export const updateOrderStatus = async (id: string, status: Order['status']): Promise<Order> => {
+    const response = await apiClient.patch(`/orders/${id}/status`, { status });
+    return response.data;
+};

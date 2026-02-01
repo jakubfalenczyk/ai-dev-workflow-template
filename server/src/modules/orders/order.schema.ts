@@ -11,3 +11,11 @@ export const createOrderSchema = z.object({
         ).min(1, 'Order must have at least one item'),
     }),
 });
+
+export const updateOrderStatusSchema = z.object({
+    body: z.object({
+        status: z.enum(['PENDING', 'COMPLETED', 'CANCELLED'], {
+            message: 'Status must be PENDING, COMPLETED, or CANCELLED',
+        }),
+    }),
+});

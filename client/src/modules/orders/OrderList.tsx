@@ -1,7 +1,9 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import { ArrowRightLeft, Plus, CheckCircle2, Clock, XCircle, DollarSign, TrendingUp, Filter } from 'lucide-react';
-import { getOrders } from './orders.api.ts';
+import toast from 'react-hot-toast';
+import { getOrders, updateOrderStatus } from './orders.api.ts';
+import type { Order } from './orders.types.ts';
 
 function formatCurrency(value: number | string): string {
     const num = typeof value === 'string' ? parseFloat(value) : value;
@@ -23,9 +25,24 @@ function formatDate(dateString: string): string {
 }
 
 function OrderList() {
+    const queryClient = useQueryClient();
     const { data: orders, isLoading } = useQuery({
         queryKey: ['orders'],
         queryFn: getOrders,
+    });
+
+    const updateStatusMutation = useMutation({
+        mutationFn: ({ id, status }: { id: string; status: Order['status'] }) =>
+            updateOrderStatus(id, status),
+        onSuccess: (_, variables) => {
+            queryClient.invalidateQueries({ queryKey: ['orders'] });
+            queryClient.invalidateQueries({ queryKey: ['dashboard'] });
+            const action = variables.status === 'COMPLETED' ? 'processed' : 'declined';
+            toast.success(`Transaction ${action} successfully`);
+        },
+        onError: () => {
+            toast.error('Failed to update transaction status');
+        },
     });
 
     if (isLoading) {
@@ -42,6 +59,14 @@ function OrderList() {
 
     const totalVolume = completedOrders.reduce((sum, o) => sum + parseFloat(String(o.totalAmount)), 0);
     const pendingVolume = pendingOrders.reduce((sum, o) => sum + parseFloat(String(o.totalAmount)), 0);
+
+    const handleProcess = (orderId: string) => {
+        updateStatusMutation.mutate({ id: orderId, status: 'COMPLETED' });
+    };
+
+    const handleDecline = (orderId: string) => {
+        updateStatusMutation.mutate({ id: orderId, status: 'CANCELLED' });
+    };
 
     return (
         <div className="space-y-6">
@@ -143,6 +168,9 @@ function OrderList() {
                                 <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
                                     Date
                                 </th>
+                                <th className="px-6 py-3.5 text-left text-xs font-semibold text-slate-600 uppercase tracking-wider">
+                                    Actions
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-200 bg-white">
@@ -195,6 +223,26 @@ function OrderList() {
                                     </td>
                                     <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500">
                                         {formatDate(order.orderDate)}
+                                    </td>
+                                    <td className="px-6 py-4 whitespace-nowrap">
+                                        {order.status === 'PENDING' && (
+                                            <div className="flex gap-2">
+                                                <button
+                                                    onClick={() => handleProcess(order.id)}
+                                                    disabled={updateStatusMutation.isPending}
+                                                    className="text-emerald-600 hover:text-emerald-900 disabled:opacity-50 text-sm font-medium"
+                                                >
+                                                    Process
+                                                </button>
+                                                <button
+                                                    onClick={() => handleDecline(order.id)}
+                                                    disabled={updateStatusMutation.isPending}
+                                                    className="text-red-600 hover:text-red-900 disabled:opacity-50 text-sm font-medium"
+                                                >
+                                                    Decline
+                                                </button>
+                                            </div>
+                                        )}
                                     </td>
                                 </tr>
                             ))}

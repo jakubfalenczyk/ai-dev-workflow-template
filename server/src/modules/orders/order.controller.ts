@@ -30,3 +30,15 @@ export const getOrderById = async (req: Request, res: Response, next: NextFuncti
         next(error);
     }
 };
+
+export const updateOrderStatus = async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const order = await orderService.updateOrderStatus(req.params.id, req.body.status);
+        res.json(order);
+    } catch (error: any) {
+        if (error?.code === 'P2025') {
+            return res.status(404).json({ message: 'Order not found' });
+        }
+        next(error);
+    }
+};

@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, NavLink } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { Toaster } from 'react-hot-toast';
 import { Building2, LayoutDashboard, Users, Briefcase, ArrowRightLeft, Bell, Settings } from 'lucide-react';
 import CustomerList from './modules/customers/CustomerList.tsx';
 import CustomerForm from './modules/customers/CustomerForm.tsx';
@@ -14,6 +15,7 @@ const queryClient = new QueryClient();
 function App() {
   return (
     <QueryClientProvider client={queryClient}>
+      <Toaster position="top-right" />
       <BrowserRouter>
         <div className="min-h-screen bg-slate-100">
           {/* Header */}
