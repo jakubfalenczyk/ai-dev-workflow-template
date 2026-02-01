@@ -30,6 +30,7 @@ As a bank operator, I want to update the status of pending transactions so that 
 4. Already processed/declined transactions should NOT show action buttons
 5. Dashboard stats should update after status change
 6. Buttons should be disabled while the request is in progress
+7. System displays a toast message with the result of the operation.
 
 ### Technical Requirements
 
