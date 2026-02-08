@@ -18,7 +18,8 @@
       "Bash(npx playwright:*)",
       "Bash(timeout /t 5 /nobreak)",
       "Bash(npm test:*)",
-      "Bash(npx tsc:*)"
+      "Bash(npx tsc:*)",
+      "Bash(if not exist \"C:\\\\Personal\\\\ai-dev-workflow-template\\\\.claude\\\\plans\" mkdir \"C:\\\\Personal\\\\ai-dev-workflow-template\\\\.claude\\\\plans\")"
     ]
   }
 }
