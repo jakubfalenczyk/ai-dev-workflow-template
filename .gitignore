@@ -63,7 +63,7 @@ Desktop.ini
 *.temp
 .cache/
 .parcel-cache/
-screenshots/
+tests/e2e/screenshots/
 test-results/
 
 # Generated files
